@@ -2,10 +2,15 @@
 
 # Import necessary modules
 import xarray as xr
-xr.set_options(use_new_combine_kwarg_defaults=True) # Setting the data_vars = 'None' as default and not 'all'
+
+xr.set_options(
+    use_new_combine_kwarg_defaults=True
+)  # Setting the data_vars = 'None' as default and not 'all'
 
 print("\n--------- 1) Loading configuration files ---------")
-from config import load_radar_settings, load_dataset_settings
+from cleanup_and_alignment.calculate_occurrences_sensitivity import calculate_occurrences_and_sensitivity_for_all_radars
+from config import load_radar_settings, load_dataset_settings, load_parameter_settings
+
 # Load radar settings and create RadarSettings objects for each radar
 radar_settings_dict = load_radar_settings("config/radar_settings.json")
 print(f"✅ Radar settings loaded for: {list(radar_settings_dict.keys())}")
@@ -15,32 +20,32 @@ data = load_dataset_settings("config/dataset_settings.json", radar_settings_dict
 print(f"✅ Dataset settings loaded with time range: {data.time_range}")
 print(f"✅ Standard dimension names: {data.standard_dimension_names}")
 
+# load parameter settings
+params = load_parameter_settings("config/parameter_settings.json")
+print(
+    f"✅ Parameter settings loaded with sensitivity parameters: {params.sensitivity} and occurrence parameters: {params.occurrence}"
+)
+
 
 # ------------------------------------------------------
 # Loading the datasets and pre-processing them
 # ------------------------------------------------------
 print("\n--------- 2) Loading the datasets and pre-processing ---------")
 from pre_processing import load_and_preprocess_datasets
+
 data = load_and_preprocess_datasets(data)
 print("✅ Datasets loaded and pre-processed for all radars.")
 
 
-# # ------------------------------------------------------
-# # Calculating occurrences and sensitivity before cleanup 
-# # ------------------------------------------------------
-# print("\n\n--------- 3) Calculating occurrences and sensitivity before cleanup ---------")
-# from cleanup_and_alignment import calculate_occurrences, calculate_sensitivity, create_global_bin_edges
-
-# threshold = 0.999
-# min_samples_per_height = 50
-# bin_edges = create_global_bin_edges(radar_datasets, bin_size=0.1)
-
-# for radar_handle, ds in radar_datasets.items():
-#     print(f"Calculating occurrences and sensitivity for radar: {radar_handle}")
-#     radar_datasets[radar_handle] = calculate_occurrences(ds, bin_edges=bin_edges, use_aligned=False)
-#     radar_datasets[radar_handle] = calculate_sensitivity(radar_datasets[radar_handle], threshold=threshold, min_samples_threshold=min_samples_per_height)
-
-# print("\n✅ Occurrences and sensitivity calculated for all radars before cleanup.")
+# ------------------------------------------------------
+# Calculating occurrences and sensitivity before cleanup
+# ------------------------------------------------------
+print(
+    "\n\n--------- 3) Calculating occurrences and sensitivity before cleanup ---------"
+)
+from cleanup_and_alignment import calculate_occurrences_and_sensitivity_for_all_radars
+data = calculate_occurrences_and_sensitivity_for_all_radars(data, params)
+print("\n✅ Occurrences and sensitivity calculated for all radars before cleanup.")
 
 
 # # ------------------------------------------------------

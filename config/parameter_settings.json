@@ -1,0 +1,11 @@
+{
+    "sensitivity":
+    {
+        "threshold": 0.999,
+        "min_samples_per_height": 50
+    },
+    "occurrence":
+    {
+        "bin_size": 0.1
+    }
+}
