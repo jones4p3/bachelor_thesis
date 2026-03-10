@@ -2,13 +2,9 @@
 
 # Import necessary modules
 import xarray as xr
-import json
-
-from config import get_days_in_time_range
-
 xr.set_options(use_new_combine_kwarg_defaults=True) # Setting the data_vars = 'None' as default and not 'all'
 
-print("\n\n--------- 1) Loading configuration files ---------")
+print("\n--------- 1) Loading configuration files ---------")
 from config import load_radar_settings, load_dataset_settings
 # Load radar settings and create RadarSettings objects for each radar
 radar_settings_dict = load_radar_settings("config/radar_settings.json")
@@ -23,13 +19,10 @@ print(f"✅ Standard dimension names: {data.standard_dimension_names}")
 # ------------------------------------------------------
 # Loading the datasets and pre-processing them
 # ------------------------------------------------------
-print("\n\n--------- 2) Loading the datasets and pre-processing them ---------")
-# Generate list of days in the specified time range for folder navigation and file loading
-# days, days_in_time_range = get_days_in_time_range(start_time, end_time)
-# print(f"🕚 Days in time range: {days_in_time_range[0:3]} to {days_in_time_range[-3:]}")  # Print first 3 and last 3 days
-# from pre_processing import load_and_preprocess_datasets
-# radar_datasets = load_and_preprocess_datasets(radars_to_process, days_in_time_range, dataset_dims)
-# print("\n✅ Datasets loaded and pre-processed for all radars.")
+print("\n--------- 2) Loading the datasets and pre-processing ---------")
+from pre_processing import load_and_preprocess_datasets
+data = load_and_preprocess_datasets(data)
+print("✅ Datasets loaded and pre-processed for all radars.")
 
 
 # # ------------------------------------------------------
