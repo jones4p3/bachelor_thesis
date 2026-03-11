@@ -24,7 +24,7 @@ def create_global_bin_edges(data, params):
 
 
 def calculate_occurrences(ds, bin_edges, use_aligned=False):
-    radar_name = ds.attrs.get("radar_name", "Unknown Radar")
+    radar_name = ds.attrs.get("name", "Unknown Radar")
     bin_size = bin_edges[1] - bin_edges[0]
     print(f"Calculating occurrences for radar: {radar_name} with bin size: {bin_size}")
 

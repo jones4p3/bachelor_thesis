@@ -253,14 +253,14 @@ def calculate_cloud_statistics(data):
 
                 data.radar_datasets[radar_slug] = ds
 
-    # ---------------------------------
-    # SAVING FILE TEST
-    # ---------------------------------
-    for radar_slug, ds in data.radar_datasets.items():
-        save_path = os.path.join(data.files_folder, f"{radar_slug}_with_statistics.nc")
-        print(f"Saving dataset with statistics for radar: {radar_slug} to {save_path}")
-        ds.to_netcdf(save_path, engine="h5netcdf")
-        print(f"✅ Dataset with statistics saved for radar: {radar_slug}")
+    # # ---------------------------------
+    # # SAVING FILE TEST
+    # # ---------------------------------
+    # for radar_slug, ds in data.radar_datasets.items():
+    #     save_path = os.path.join(data.files_folder, f"{radar_slug}_with_statistics.nc")
+    #     print(f"Saving dataset with statistics for radar: {radar_slug} to {save_path}")
+    #     ds.to_netcdf(save_path, engine="h5netcdf")
+    #     print(f"✅ Dataset with statistics saved for radar: {radar_slug}")
 
     # ---------------------------------
     # CLOUD LAYER DISTRIBUTION
