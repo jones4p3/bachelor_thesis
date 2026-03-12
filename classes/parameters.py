@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from os import write
 
 @dataclass
 class SensitivityParameters:
@@ -35,3 +36,4 @@ class Parameters:
     uptime_alignment: UptimeAlignmentParameters
     cloud_detection: CloudDetectionParameters
     debug: bool
+    write_netcdf_files: bool

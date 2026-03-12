@@ -29,7 +29,8 @@ Running `main.py` does preprocessing, quality filtering, cloud-layer detection, 
 6. Compute cloud statistics:
    - daily clear-sky/cloudiness/multilayer/precipitation fractions,
    - cloud presence per height gate,
-   - binned cloud property distributions.
+   - binned cloud property distributions,
+   - optional NetCDF export of statistics-enhanced datasets (controlled by `write_netcdf_files`).
 7. Create plots in the configured figure folder.
 
 ## Input data layout
@@ -60,10 +61,11 @@ For each radar:
 - `standard_dimension_names`: common names used after renaming (usually `time`, `height`, `ze`).
 - `time_range.start` / `time_range.end`: campaign window to load and analyze.
 - `figure_folder`: where PNG outputs are written.
-- `files_folder`: intended output folder for data products (NetCDF saving is currently commented out in code).
+- `files_folder`: output folder for generated NetCDF files when file export is enabled.
 
 ### `settings/parameter_settings.json`
 - `debug`: enable/disable debug prints.
+- `write_netcdf_files`: `true` to save one NetCDF per radar after cloud statistics to `files_folder`; `false` to skip file writing.
 - `sensitivity.threshold`: percentile-based sensitivity level (used before cloud detection).
 - `sensitivity.min_samples_per_height`: minimum counts needed for a valid sensitivity value at a height.
 - `occurrence.bin_size`: reflectivity histogram bin size (dBZ).
@@ -93,4 +95,5 @@ By default, figures are written to `output/figures/`, including:
 - daily fraction time series,
 - cloud layer distribution.
 
-Processed datasets are kept in memory and updated through each stage; NetCDF export code exists but is currently commented out.
+When `write_netcdf_files` is `true` in `settings/parameter_settings.json`, NetCDF files are also written to `files_folder` as:
+- `<radar_slug>_with_statistics.nc`

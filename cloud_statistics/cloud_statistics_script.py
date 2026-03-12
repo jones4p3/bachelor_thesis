@@ -4,7 +4,7 @@ import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
 
-def calculate_cloud_statistics(data):
+def calculate_cloud_statistics(data, params):
     for radar_slug, ds in data.radar_datasets.items():
         print(f"Radar: {radar_slug}")
         n_layers = ds["n_layers"]
@@ -253,14 +253,15 @@ def calculate_cloud_statistics(data):
 
                 data.radar_datasets[radar_slug] = ds
 
-    # # ---------------------------------
-    # # SAVING FILE TEST
-    # # ---------------------------------
-    # for radar_slug, ds in data.radar_datasets.items():
-    #     save_path = os.path.join(data.files_folder, f"{radar_slug}_with_statistics.nc")
-    #     print(f"Saving dataset with statistics for radar: {radar_slug} to {save_path}")
-    #     ds.to_netcdf(save_path, engine="h5netcdf")
-    #     print(f"✅ Dataset with statistics saved for radar: {radar_slug}")
+    # ---------------------------------
+    # SAVING FILE TEST
+    # ---------------------------------
+    if params.write_netcdf_files:
+        for radar_slug, ds in data.radar_datasets.items():
+            save_path = os.path.join(data.files_folder, f"{radar_slug}_with_statistics.nc")
+            print(f"Saving dataset with statistics for radar: {radar_slug} to {save_path}")
+            ds.to_netcdf(save_path, engine="h5netcdf")
+            print(f"✅ Dataset with statistics saved for radar: {radar_slug}")
 
     # ---------------------------------
     # CLOUD LAYER DISTRIBUTION

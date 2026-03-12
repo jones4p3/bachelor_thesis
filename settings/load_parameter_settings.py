@@ -25,7 +25,8 @@ def load_parameter_settings(parameter_settings_path):
             occurrence=occurrence_params,
             uptime_alignment=uptime_alignment_params,
             cloud_detection=cloud_detection_params,
-            debug=bool(parameter_settings.get("debug", False))
+            debug=bool(parameter_settings.get("debug", False)),
+            write_netcdf_files=bool(parameter_settings.get("write_netcdf_files", False))
         )
         return params
     except Exception as e:

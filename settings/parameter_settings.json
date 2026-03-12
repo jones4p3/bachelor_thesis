@@ -1,5 +1,6 @@
 {
     "debug": false,
+    "write_netcdf_files": false,
     "sensitivity":
     {
         "threshold": 0.999,
