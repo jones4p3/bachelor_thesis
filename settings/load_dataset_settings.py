@@ -1,5 +1,4 @@
 import json
-import sys
 from classes import Dataset, TimeRange, DimensionNames
 
 def load_dataset_settings(dataset_settings_path: str, radar_settings_dict: dict) -> Dataset:
@@ -19,4 +18,3 @@ def load_dataset_settings(dataset_settings_path: str, radar_settings_dict: dict)
         return dataset
     except Exception as e:
         print(f"❌ Error loading dataset settings: {e}")
-        sys.exit(1)

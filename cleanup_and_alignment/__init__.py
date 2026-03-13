@@ -7,6 +7,5 @@ __all__ = [
     "add_uptime_attributes_to_dataset",
     "calculate_uptime",
     "calculate_occurrences_and_sensitivity_for_all_radars",
-    "calculate_sensitivity",
     "cleanup_and_align_datasets",
     ]

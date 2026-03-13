@@ -1,5 +1,4 @@
 import json
-import sys
 from classes import Parameters, SensitivityParameters, OccurrenceParameters, UptimeAlignmentParameters
 from dataclasses import asdict
 
@@ -31,8 +30,6 @@ def load_parameter_settings(parameter_settings_path):
         return params
     except Exception as e:
         print(f"Error loading parameter settings: {e}")
-        sys.exit(1)
-        return None
 
 def print_parameter_settings(params):
     print(
