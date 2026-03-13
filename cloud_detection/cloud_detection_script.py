@@ -1,11 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
+import logging
 
-from .get_min_max import get_reflectivity_min_max, get_height_min_max_with_valid_ze
-from .single_time_functions import get_single_time_from_input, get_single_time_reflectivity_min_max, plot_single_time_stamp
 from .edge_detection import find_cloud_edges, check_cloud_boundaries
 from .layer_detection import analyze_possible_cloud_layers, get_max_layers_in_time_range
+
+logger = logging.getLogger("cloud_detection")
 
 
 def run_cloud_detection_algorithm(data, params):
@@ -55,8 +56,8 @@ def run_cloud_detection_algorithm(data, params):
     #         cloud_radars[radar] = data.radar_datasets[radar]
     # else:
     cloud_radars = data.radar_datasets
-    print("Using the whole set of cloud radars for analysis.")
-    print(f"Radars to analyze: {cloud_radars.keys()}\n")
+    logger.debug("Using the whole set of cloud radars for analysis.")
+    logger.debug(f"Radars to analyze: {cloud_radars.keys()}\n")
 
     # # Pack settings together
     # general_settings = {
@@ -144,10 +145,10 @@ def run_cloud_detection_algorithm(data, params):
     # ---------------------------------
     single_times_for_radars = []
     single_time = None
-    print("--- Starting Cloud Layer Detection ---")
+    logger.debug("--- Starting Cloud Layer Detection ---")
     for fig_idx, (radar_slug, ds) in enumerate(cloud_radars.items()):
         radar_band = ds.attrs["band"]
-        print(f"💻 Starting cloud layer detection for: {radar_band}")
+        logger.info(f"💻 Starting cloud layer detection for: {radar_band}")
         # Unpacking settings
         # debug = general_settings["debug"]
         # use_threshold = general_settings["use_threshold"]
@@ -164,8 +165,8 @@ def run_cloud_detection_algorithm(data, params):
         #     ds = ds.sel(time=slice(*test_time_range))
         #     print(f"- Selected dataset test time range: {test_time_range}\n")
         # else:
-        print(f"- Using full dataset time range for radar: {radar_band}")
-        print(f"Time range: {ds['time'].values[0]} to {ds['time'].values[-1]}\n")
+        logger.debug(f"- Using full dataset time range for radar: {radar_band}")
+        logger.debug(f"Time range: {ds['time'].values[0]} to {ds['time'].values[-1]}\n")
 
         # Getting single time for plotting later if needed
         # if show_plots and plot_single_time:
@@ -183,13 +184,12 @@ def run_cloud_detection_algorithm(data, params):
         if use_fixed_threshold:
             threshold_mask = ds["ze"] >= fixed_threshold_in_dBZ
             ze = ds["ze"].where(threshold_mask) # Shape (time, height)
-            print(f"- Applying fixed threshold of {fixed_threshold_in_dBZ} dBZ for radar: {radar_band}\n")
+            logger.debug(f"- Applying fixed threshold of {fixed_threshold_in_dBZ} dBZ for radar: {radar_band}\n")
         else:
-            print(f"- Applying sensitivity-based threshold for radar: {radar_band} at sensitivity + {sensitivity_add_in_dBZ} dBZ")
+            logger.debug(f"- Applying sensitivity-based threshold for radar: {radar_band} at sensitivity + {sensitivity_add_in_dBZ} dBZ")
             sensitivity_mask = (ds["sensitivity"] + sensitivity_add_in_dBZ)
-            if debug: 
-                print(f"  Head: {sensitivity_mask.values.flatten()[:5]}")
-                print(f"  Tail: {sensitivity_mask.values.flatten()[-5:]}\n")
+            logger.debug(f"  Head: {sensitivity_mask.values.flatten()[:5]}")
+            logger.debug(f"  Tail: {sensitivity_mask.values.flatten()[-5:]}\n")
             threshold_mask = ds["ze"] >= (sensitivity_mask)
             ze = ds["ze"].where(threshold_mask) # Shape (time, height)
         ze_np = ze.values  # Numpy array of ze for faster processing
@@ -236,11 +236,11 @@ def run_cloud_detection_algorithm(data, params):
         # Iterating over all time steps in the given time_range
         for i, time_step in enumerate(ds_time_range):
             # Analyze ze profile for the current time step
-            if debug and detailed_debug: print(f"🔬 Analyzing time step: {time_step} - {single_time if single_time is not None else 'None'}")
+            if detailed_debug: logger.debug(f"🔬 Analyzing time step: {time_step} - {single_time if single_time is not None else 'None'}")
 
             # Selecting ze_profile for the given time_step
             ze_profile = ze_np[i, :]  
-            if debug and detailed_debug: print(f"   Selected ze profile for time step")
+            if detailed_debug: logger.debug(f"   Selected ze profile for time step")
 
             # Get back the indices where a cloud start and ends
             cloud_base_idx, cloud_top_idx = find_cloud_edges(ze_profile, detailed_debug)
@@ -253,7 +253,7 @@ def run_cloud_detection_algorithm(data, params):
                 params,
                 detailed_debug
             )
-            if debug: print(f"   --- RESULT: Detected {number_of_cloud_layers} cloud layers.\n")
+            logger.debug(f"   --- RESULT: Detected {number_of_cloud_layers} cloud layers.\n")
 
             # Marking clouds in plots
             # if show_plots:
@@ -310,10 +310,10 @@ def run_cloud_detection_algorithm(data, params):
             # Append the cloud layers detected in this time step to the overall list for the radar
             all_detected_cloud_layer_per_radar.append((time_step, cloud_layers_in_time_step))
 
-        print(f"------ ✅ Finished cloud layer detection for: {radar_band}\n")
+        logger.info(f"💻 ✅ Finished cloud layer detection for: {radar_band}")
         
         # Creating new dataset with cloud layer information
-        print(f"💾 Creating new dataset with cloud layer information for radar: {radar_band}")
+        logger.debug(f"💾 Creating new dataset with cloud layer information for radar: {radar_band}")
         # Process all_layer_per_time_range for adding to dataset
         max_layer_time_step, max_n_layers = get_max_layers_in_time_range(all_detected_cloud_layer_per_radar, debug)
 
@@ -331,10 +331,10 @@ def run_cloud_detection_algorithm(data, params):
         # Filling the numpy arrays
         for time_index, (_, cloud_layers_data) in enumerate(all_detected_cloud_layer_per_radar):
             n_layers[time_index] = len(cloud_layers_data)
-            if debug: print(f"Time index {time_index} has {n_layers[time_index]} layers.")
+            logger.debug(f"Time index {time_index} has {n_layers[time_index]} layers.")
 
             for layer_index, layer_data in enumerate(cloud_layers_data):
-                if debug: print(f"Layer_index: {layer_index}, layer_data: {layer_data}")
+                logger.debug(f"Layer_index: {layer_index}, layer_data: {layer_data}")
                 data_in_gates = layer_data[0]
                 data_in_height = layer_data[1]
                 cloud_base_gate, cloud_top_gate, cloud_thickness_in_gates = data_in_gates[0], data_in_gates[1], data_in_gates[2]
@@ -347,7 +347,7 @@ def run_cloud_detection_algorithm(data, params):
                 base_in_m[time_index, layer_index] = cloud_base_in_m
                 top_in_m[time_index, layer_index] = cloud_top_in_m
                 thickness_in_m[time_index, layer_index] = cloud_thickness_in_m
-        print(f"Finished filling cloud layer data arrays for radar: {radar_band}")
+        logger.debug(f"Finished filling cloud layer data arrays for radar: {radar_band}")
     
 
         # Adding the cloud layer data to the dataset
@@ -397,7 +397,7 @@ def run_cloud_detection_algorithm(data, params):
 
         # Saving the new dataset
         data.radar_datasets[radar_slug] = ds_out
-        print(f"---- 💾 ✅ New dataset with cloud layer information created and stored in radar_datasets for radar: {radar_band}\n")
+        logger.debug(f"💾 ✅ New dataset with cloud layer information created and stored in radar_datasets for radar: {radar_band}")
 
         # Actual plotting
         # if show_plots:

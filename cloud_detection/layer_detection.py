@@ -181,5 +181,5 @@ def get_max_layers_in_time_range(all_layers_per_time_range, debug=False):
             max_n_layers = n_layers
             max_layer_time_step = time_step
             if debug: print(f"New max number of layers found: {max_n_layers} at time {time_step}")
-    print(f"Max number of layers in any time step: {max_n_layers} at time {max_layer_time_step if max_layer_time_step is not None else 'N/A'}")
+    # print(f"Max number of layers in any time step: {max_n_layers} at time {max_layer_time_step if max_layer_time_step is not None else 'N/A'}")
     return max_layer_time_step, max_n_layers

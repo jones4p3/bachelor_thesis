@@ -1,8 +1,11 @@
 import numpy as np
 import sys
+import logging
+
+logger = logging.getLogger("edge_detection")
 
 def find_cloud_edges(ze_profile, detailed_debug=False):
-    if detailed_debug: print("   - Finding cloud edges in reflectivity profile.")
+    if detailed_debug: logger.debug("   - Finding cloud edges in reflectivity profile.")
     # Mask for differentiating between: True = non-NaN and False - NaN values
     ze_mask_for_value_detection = ~np.isnan(ze_profile)
     ze_mask = ze_mask_for_value_detection.astype(int)
@@ -18,9 +21,9 @@ def find_cloud_edges(ze_profile, detailed_debug=False):
     cloud_top_idx = np.where(cloud_top_edges == -1)[0]
     
     if detailed_debug: 
-        print(f"      - Cloud base indices: {cloud_base_idx}")
-        print(f"      - Cloud top indices: {cloud_top_idx}")
-        print(f"   -- RESULT: Found {len(cloud_base_idx)} cloud bases and {len(cloud_top_idx)} cloud tops.\n")
+        logger.debug(f"      - Cloud base indices: {cloud_base_idx}")
+        logger.debug(f"      - Cloud top indices: {cloud_top_idx}")
+        logger.debug(f"   -- RESULT: Found {len(cloud_base_idx)} cloud bases and {len(cloud_top_idx)} cloud tops.\n")
     return cloud_base_idx, cloud_top_idx
 
 def check_cloud_boundaries(cloud_bases, cloud_tops, time_step):

@@ -4,6 +4,9 @@
 from .time_matching import time_match_radars, remove_downtime_intervals_from_ds
 from .height_slicing import slice_height_range
 from .range_gate_resolution import calculate_range_gate_resolution
+import logging
+
+logger = logging.getLogger("cleanup_and_alignment")
 
 # Set the arrays for storing results
 combined_downtime = []
@@ -16,30 +19,30 @@ def cleanup_and_align_datasets(data, params):
     # ---------------------
     # Time matching radars
     # ---------------------
-    print("⏱️ Time-matching radars based on uptime...")
+    logger.info("⏱️  Time-matching radars based on uptime...")
     uptime_results = time_match_radars(data, params)
-    print("⏱️ ✅ Time-matching completed. Uptime results calculated for all radars.")
+    logger.info("⏱️  ✅ Time-matching completed. Uptime results calculated for all radars.")
 
     # ---------------------
     # Height slicing
     # ---------------------
-    print("🗼 Height slicing...")
-    data, highest_minimum_height, lowest_maximum_height = slice_height_range(data, params)
-    print("🗼 ✅ Height slicing completed.")
+    logger.info("🗼 Height slicing...")
+    data, highest_minimum_height, lowest_maximum_height = slice_height_range(data)
+    logger.info("🗼 ✅ Height slicing completed.")
 
     # -------------------------------------------------------
     # RANGE GATE RESOLUTION
     # -------------------------------------------------------
-    print("📏 Calculating range gate resolution and adding it to the datasets...")
-    data, unique_range_gate_sizes = calculate_range_gate_resolution(data, params)
-    print("📏 ✅ Range gate resolution calculated.")
+    logger.info("📏 Calculating range gate resolution and adding it to the datasets...")
+    data, unique_range_gate_sizes = calculate_range_gate_resolution(data)
+    logger.info("📏 ✅ Range gate resolution calculated.")
 
     # -------------------------------------------------------
     # Cleaning
     # -------------------------------------------------------
-    print("🧹 Removing downtime intervals from the datasets...")
+    logger.info("🧹 Removing downtime intervals from the datasets...")
     data = remove_downtime_intervals_from_ds(data, params, highest_minimum_height, lowest_maximum_height, unique_range_gate_sizes, uptime_results)
-    print("🧹 ✅ Downtime intervals removed from the datasets.")
+    logger.info("🧹 ✅ Downtime intervals removed from the datasets.")
 
     return data
     

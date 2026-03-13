@@ -1,5 +1,8 @@
+import logging
 import xarray as xr
 from .utils import *
+
+logger = logging.getLogger("pre_processing")
 
 
 def load_and_preprocess_datasets(data):
@@ -13,15 +16,15 @@ def load_and_preprocess_datasets(data):
     for _, radar in data.radar_settings.items():
         # Initialize key for this radar's datasets
         radar_datasets[radar.slug] = {}
-        print(
-            f"💻 Preparing to process radar: {radar.attributes.name} - {radar.attributes.band}"
+        logger.info(
+            f"💻 Process radar: {radar.attributes.name} - {radar.attributes.band}"
         )
 
         # Grab all file paths
         file_paths = create_file_paths_list(radar, data, endswith=".nc")
 
         # Load the dataset with xarray based on file paths
-        print(f"⏱️ Loading dataset for radar {radar.slug} with xarray...")
+        logger.info(f"⏱️  Loading dataset for radar {radar.slug} with xarray...")
         ds = xr.open_mfdataset(
             file_paths,
             preprocess=lambda ds: ds.sortby(radar.dimension_names.time),
@@ -32,7 +35,7 @@ def load_and_preprocess_datasets(data):
             },
             engine="h5netcdf",
         )
-        print(f"⏱️ ✅ Loaded dataset for radar {radar.slug}")
+        logger.info(f"⏱️  ✅ Loaded dataset for radar {radar.slug}")
 
         # Adding the instrument height to range gates if specified
         ds = adding_instrument_height(radar, ds)
@@ -57,7 +60,7 @@ def load_and_preprocess_datasets(data):
 
         # Store the processed dataset in the radar_datasets dictionary
         radar_datasets[radar.slug] = ds
-        print(f"✅ Finished processing dataset for radar {radar.slug}\n")
+        logger.info(f"✅ Finished processing dataset for radar {radar.slug}")
     
     data.radar_datasets = radar_datasets
     return data

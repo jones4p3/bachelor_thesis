@@ -1,13 +1,17 @@
+from venv import logger
+
 import pandas as pd
 import numpy as np
 from .utils import *
+import logging
+
+logger = logging.getLogger("calculate_uptime")
 
 def uptime_from_interval_times(
     interval_times,
     interval_start_time,
     interval_end_time,
     max_sampling_time=10,
-    debug=False,
 ):
     """
     Fraction of window covered_seconds by data, assuming each sample covers backwards
@@ -34,13 +38,12 @@ def uptime_from_interval_times(
     covered_seconds = np.timedelta64(0, "s")
 
     # Debuging prints
-    if debug:
-        print("interval_start_time:", interval_start_time)
-        print("interval_end_time:", interval_end_time)
-        print("interval_times:", interval_times.size)
-        print("total_interval_in_seconds:", total_interval_in_seconds)
-        print("max_sampling_time (s):", max_sampling_time)
-        print("covered_seconds (s):", covered_seconds)
+    logger.debug("interval_start_time:", interval_start_time)
+    logger.debug("interval_end_time:", interval_end_time)
+    logger.debug("interval_times:", interval_times.size)
+    logger.debug("total_interval_in_seconds:", total_interval_in_seconds)
+    logger.debug("max_sampling_time (s):", max_sampling_time)
+    logger.debug("covered_seconds (s):", covered_seconds)
 
     # Variable to keep track of seconds which have been cut off due to interval limits
     start_cut_off_count = 0
@@ -51,13 +54,11 @@ def uptime_from_interval_times(
     for time_idx_in_interval in range(interval_times.size):
         # Handle the first sample in the interval
         if time_idx_in_interval == 0:
-            if debug:
-                print(f"--- Processing interval with {interval_times.size} samples ---")
+            logger.debug(f"--- Processing interval with {interval_times.size} samples ---")
 
             # Check if the first time sample starts after interval_start_time
             if interval_times[time_idx_in_interval] > interval_start_time:
-                if debug:
-                    print(
+                logger.debug(
                         f"First sample {interval_times[time_idx_in_interval]} after interval start {interval_start_time}"
                     )
                 # Get the minimum from the difference betweend the first sample and interval start time and max_sampling_time
@@ -71,8 +72,7 @@ def uptime_from_interval_times(
                     start_cut_off_count += 1
                 else:
                     covered_seconds += passed_seconds_after_starting_time
-                if debug:
-                    print(
+                logger.debug(
                         f"  Total covered_seconds (s): {covered_seconds} from {total_interval_in_seconds} [{(covered_seconds/total_interval_in_seconds):.4f}]"
                     )
 
@@ -96,20 +96,19 @@ def uptime_from_interval_times(
                 current_sample_end_time - previous_sample_end_time
             )
             if current_sample_end_time < interval_start_time:
-                print(
+                logger.warning(
                     f"⚠️ WARNING: Sample {time_idx_in_interval}: {current_sample_end_time} before interval start {interval_start_time}"
                 )
                 current_sample_end_time = interval_start_time
             if current_sample_end_time > interval_end_time:
-                print(
+                logger.warning(
                     f"⚠️ WARNING: Sample {time_idx_in_interval}: {current_sample_end_time} after interval end {interval_end_time}"
                 )
                 continue
 
             # Check for downtime longer than max_sampling_time
             if difference_between_samples > (max_sampling_time):
-                if debug:
-                    print(
+                logger.debug(
                         f"  Downtime longer than max_sampling_time between sample {time_idx_in_interval-1} and {time_idx_in_interval}: {difference_between_samples} seconds"
                     )
                 covered_seconds += max_sampling_time
@@ -119,8 +118,7 @@ def uptime_from_interval_times(
 
     # Uptime in interval
     uptime_in_interval = covered_seconds / total_interval_in_seconds
-    if debug:
-        print(
+    logger.debug(
             f"--------- Uptime in interval: {uptime_in_interval:.2f} (covered_seconds {covered_seconds} seconds of {total_interval_in_seconds} seconds)"
         )
     return (
@@ -138,7 +136,7 @@ def calculate_uptime(
     threshold_for_interval,
 ):
 
-    print("Calculating uptime...")
+    logger.debug("Calculating uptime...")
     # Convert sampling interval to pandas frequency string
     sampling_interval_in_minutes_str = f"{sampling_interval_in_minutes}min"
 

@@ -1,12 +1,14 @@
 import os
-
+import logging
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
 
+logger = logging.getLogger("cloud_statistics")
+
 def calculate_cloud_statistics(data, params):
     for radar_slug, ds in data.radar_datasets.items():
-        print(f"Radar: {radar_slug}")
+        logger.info(f"💻 Calculating cloud statistics for radar: {radar_slug}")
         n_layers = ds["n_layers"]
         # Define resampling interval
         interval_step = "1D"
@@ -64,7 +66,7 @@ def calculate_cloud_statistics(data, params):
         # ---------------------------------
         # CLOUD FRACTION
         # ---------------------------------
-        print(f"Processing cloud fraction per height for radar: {radar_slug}")
+        logger.debug(f"Processing cloud fraction per height for radar: {radar_slug}")
         cloud_base = ds["cloud_base_gate"]
         cloud_top = ds["cloud_top_gate"]
         # range_gate_sizes = ds["range_gate_size_in_m"]  # Size of each height gate in meters
@@ -96,9 +98,7 @@ def calculate_cloud_statistics(data, params):
         })
 
         data.radar_datasets[radar_slug] = ds
-
-    print("--- Finished cloud statistics calculation for all radars ---")
-
+        logger.info(f"✅ Cloud statistics calculated for radar: {radar_slug}")
 
     # ---------------------------------
     # BINNING
@@ -115,10 +115,10 @@ def calculate_cloud_statistics(data, params):
         max_height_ds = ds["cloud_top_in_m"].max()
         if max_height_ds > max_height:
             max_height = max_height_ds
-            print(f"{radar_slug}: New max height found: {max_height.values} m")
+            logger.debug(f"{radar_slug}: New max height found: {max_height.values} m")
         if max_ds > max_thickness:
             max_thickness = max_ds
-            print(f"{radar_slug}: New max thickness found: {max_thickness.values} m")
+            logger.debug(f"{radar_slug}: New max thickness found: {max_thickness.values} m")
 
     # Binning edges and centers
     thickness_bin_edges = np.arange(0, max_thickness + bin_size, bin_size)
@@ -129,7 +129,7 @@ def calculate_cloud_statistics(data, params):
 
     for (radar_slug, ds) in data.radar_datasets.items():
         for var in vars_to_bin:
-            print(f"Calculating binned {var} for radar: {radar_slug}")
+            logger.debug(f"Calculating binned {var} for radar: {radar_slug}")
             # Extract cloud values as a 1D array
             cloud_propertie = ds[var].values.ravel()
             valid_mask = np.isfinite(cloud_propertie) & (cloud_propertie > 0)
@@ -150,7 +150,7 @@ def calculate_cloud_statistics(data, params):
 
             # Normalize to get fraction
             cloud_propertie_fraction = binned_counts / binned_counts.sum()
-            print(f"Fraction check sum for {var}: {cloud_propertie_fraction.sum()} for radar: {radar_slug}")
+            logger.debug(f"Fraction check sum for {var}: {cloud_propertie_fraction.sum()} for radar: {radar_slug}")
             # Create xarray DataArray for binned cloud thickness fraction
             cloud_propertie_da = xr.DataArray(
                 cloud_propertie_fraction,
@@ -176,7 +176,7 @@ def calculate_cloud_statistics(data, params):
 
     # Itterating thorugh each layer
     for layer in layers_to_process:
-        print(f"Processing layer: {layer}")
+        logger.debug(f"Processing layer: {layer}")
         max_height = -np.inf
         max_thickness = -np.inf
 
@@ -193,12 +193,12 @@ def calculate_cloud_statistics(data, params):
             max_thickness_ds = ds["cloud_thickness_in_m"].sel(layer=layer).max(skipna=True)
             if max_height_ds > max_height:
                 max_height = max_height_ds
-                print(f"{radar_slug} Layer {layer}: New max height found: {max_height.values} m")
+                logger.debug(f"{radar_slug} Layer {layer}: New max height found: {max_height.values} m")
             if max_thickness_ds > max_thickness:
                 max_thickness = max_thickness_ds
-                print(f"{radar_slug} Layer {layer}: New max thickness found: {max_thickness.values} m")
-        print(f"Final max height for layer {layer}: {max_height.values} m")
-        print(f"Final max thickness for layer {layer}: {max_thickness.values} m")
+                logger.debug(f"{radar_slug} Layer {layer}: New max thickness found: {max_thickness.values} m")
+        logger.debug(f"Final max height for layer {layer}: {max_height.values} m")
+        logger.debug(f"Final max thickness for layer {layer}: {max_thickness.values} m")
 
         # Iterate over variables to plot
         for var in var_to_plot:
@@ -211,7 +211,7 @@ def calculate_cloud_statistics(data, params):
 
             # Binning the cloud properties for each radar
             for (radar_slug, ds) in data.radar_datasets.items():
-                print(f"Calculating binned {var} for radar: {radar_slug}, layer: {layer}")
+                logger.debug(f"Calculating binned {var} for radar: {radar_slug}, layer: {layer}")
                 # n_layers = n_layers_dict[radar_slug]
                 # layer_mask = (n_layers >= layer) # Select time steps where at least 'layer' layers are present
                 # layer_ds = ds.isel(time=np.where(layer_mask)[0]).sel(layer=layer)
@@ -235,7 +235,7 @@ def calculate_cloud_statistics(data, params):
                 # total_var = ds[f"{var}_fraction_binned"].sum().values # Total valid signals for the variable across all layers, used for normalization
                 cloud_propertie_fraction = binned_counts / binned_counts.sum() # Normalize to get fraction relative to valid signals in the specific layer, so we can compare the distribution between layers without the influence of different number of valid signals in each layer
 
-                print(f"Fraction check sum: {cloud_propertie_fraction.sum()} for radar: {radar_slug}, layer: {layer}, variable: {var}")
+                logger.debug(f"Fraction check sum: {cloud_propertie_fraction.sum()} for radar: {radar_slug}, layer: {layer}, variable: {var}")
 
                 # Create xarray DataArray for binned cloud property fraction
                 cloud_propertie_da = xr.DataArray(
@@ -259,9 +259,9 @@ def calculate_cloud_statistics(data, params):
     if params.write_netcdf_files:
         for radar_slug, ds in data.radar_datasets.items():
             save_path = os.path.join(data.files_folder, f"{radar_slug}_with_statistics.nc")
-            print(f"Saving dataset with statistics for radar: {radar_slug} to {save_path}")
+            logger.info(f"📁 Saving dataset with statistics for radar: {radar_slug} to {save_path}")
             ds.to_netcdf(save_path, engine="h5netcdf")
-            print(f"✅ Dataset with statistics saved for radar: {radar_slug}")
+            logger.info(f"📁 ✅ Dataset with statistics saved for radar: {radar_slug}")
 
     # ---------------------------------
     # CLOUD LAYER DISTRIBUTION
@@ -270,12 +270,12 @@ def calculate_cloud_statistics(data, params):
     layer_counts_per_radar = {}
 
     for (radar_slug, ds) in data.radar_datasets.items():
-        print(f"Preparing grouped bar plot data for radar: {radar_slug}")
+        logger.debug(f"Preparing grouped bar plot data for radar: {radar_slug}")
         band = ds.attrs.get("band", "Unknown Band")
         # Extract number of layers
         n_layers = ds["n_layers"]
         max_layers = int(n_layers.max().values)
-        print(f"Max number of layers in dataset: {max_layers}")
+        logger.debug(f"Max number of layers in dataset: {max_layers}")
     
         # Calculate counts and fractions
         layer_counts = []
@@ -291,12 +291,12 @@ def calculate_cloud_statistics(data, params):
         layer_counts_per_radar[band] = layer_counts
 
     for layer_idx, layer in enumerate(layer_fractions):
-        print(f"Layer {layer_idx}: ")
+        logger.debug(f"Layer {layer_idx}: ")
         for band, fractions in grouped_bar_plot_data.items():
-            print(f"{band}: {(fractions[layer_idx]*100):.6f}%")
+            logger.debug(f"{band}: {(fractions[layer_idx]*100):.6f}%")
 
     for band, counts in layer_counts_per_radar.items():
-        print(f"Layer counts for {band}: {counts}")
+        logger.debug(f"Layer counts for {band}: {counts}")
 
     x_labels = ["Clear-sky", "1 Layer", "2 Layers", "3 Layers", "4 Layers", "5 Layers", "6 Layers", "7 Layers", "8 Layers"]
     plot_colors = plt.get_cmap("tab10").colors
@@ -326,6 +326,7 @@ def calculate_cloud_statistics(data, params):
     ax.set_ylabel(r"Occurrence (\%)")
     # ax.set_title("Cloud Layer Distribution by Radar Band")
     plt.savefig(os.path.join(data.figure_folder, "cloud_layer_distribution.png"), dpi=300, bbox_inches="tight")
+    logger.info(f"🖼️  Cloud layer distribution plot saved")
 
     return data
 

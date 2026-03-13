@@ -4,6 +4,9 @@ import os
 import xarray as xr
 from .calculate_uptime import calculate_uptime
 from .utils import *
+import logging
+
+logger = logging.getLogger("time_matching")
 
 
 def time_match_radars(data, params):
@@ -11,7 +14,7 @@ def time_match_radars(data, params):
 
     # Define time range for given dataset settings 
     time_range = (np.datetime64(data.time_range.start), np.datetime64(data.time_range.end))
-    print(
+    logger.debug(
         f"Using full campaign time range from {time_range[0]} to {time_range[1]}"
     )
 
@@ -23,14 +26,14 @@ def time_match_radars(data, params):
 
     # Calculate the uptime for each radar in each interval
     for idx, (radar_slug, radar_ds) in enumerate(data.radar_datasets.items()):
-        print(f"💻 Calculating uptime for {radar_slug}")
+        logger.debug(f"💻 Calculating uptime for {radar_slug}")
         # Extract dataset for each radar
         ds = radar_ds.sel(time=slice(*time_range))
         ds_start = ds.time.min().values
         ds_end = ds.time.max().values
 
         # Print time range information
-        print(f"Dataset scliced into time range from {ds_start} to {ds_end}")
+        logger.debug(f"Dataset scliced into time range from {ds_start} to {ds_end}")
 
         # Adding time range, sampling interval, max sampling time and threshold information to the dataset attributes for later reference
         ds = add_uptime_attributes_to_dataset(data, params, ds)
@@ -49,7 +52,7 @@ def time_match_radars(data, params):
 
         # Store results
         uptime_results[radar_slug] = dataset_uptime_df
-    print("Uptime calculation completed for all radars.")
+    logger.debug("Uptime calculation completed for all radars.")
 
     # Accumulate downtime
     # Accumalte the downtime and uptime across all radars
@@ -92,23 +95,23 @@ def time_match_radars(data, params):
         cleaned_uptime_df["end_added_seconds"].sum().astype(float) / 60
     )  # Each row is in seconds, so divide by 60 to get minutes
     cleaned_uptime_total_minutes = len(cleaned_uptime_df) * sampling_interval_in_minutes
-    print(
+    logger.debug(
         f"Total downtime size: {len(total_downtime_df)}, Total uptime size: {len(total_uptime_df)}, Total combined: {len(total_downtime_df) + len(total_uptime_df)}"
     )
-    print(
+    logger.debug(
         f"Unique downtime size: {len(unique_total_downtime_df)}, Unique uptime size: {len(unique_total_uptime_df)}, Unique combined: {len(unique_total_downtime_df) + len(unique_total_uptime_df)}"
     )
-    print(f"Cleaned uptime size: {len(cleaned_uptime_df)}")
-    print(
+    logger.debug(f"Cleaned uptime size: {len(cleaned_uptime_df)}")
+    logger.debug(
         f"Cleaned uptime intervals cover from {cleaned_uptime_df['interval_start_time'].min()} to {cleaned_uptime_df['interval_end_time'].max()}"
     )
-    print(
+    logger.debug(
         f"Total uptime: {len(cleaned_uptime_df) * sampling_interval_in_minutes} minutes -- {(len(cleaned_uptime_df) / 4032)*100:.2f}% of total campaign time"
     )
-    print(
+    logger.debug(
         f"Cleaned uptime starting cut-offs: {cleaned_uptime_start_cut_off_minutes} minutes -- {(cleaned_uptime_start_cut_off_minutes / cleaned_uptime_total_minutes)*100:.2f}% of cleaned uptime"
     )
-    print(
+    logger.debug(
         f"Cleaned uptime ending added time: {cleaned_uptime_end_added_minutes} minutes -- {(cleaned_uptime_end_added_minutes / cleaned_uptime_total_minutes)*100:.2f}% of cleaned uptime"
     )
 
@@ -271,7 +274,7 @@ def split_ds_by_intervals(
 
 def remove_downtime_intervals_from_ds(data, params, highest_minimum_height, lowest_maximum_height, unique_range_gate_sizes, uptime_results):
     for radar_slug, ds in data.radar_datasets.items():
-        print(f"Cleaning dataset for {radar_slug}...")
+        logger.debug(f"Cleaning dataset for {radar_slug}...")
         radar_title = ds.attrs.get("radar_name", radar_slug)
 
         # Dropping time intervals with downtime
@@ -284,12 +287,12 @@ def remove_downtime_intervals_from_ds(data, params, highest_minimum_height, lowe
             flag_col="ignore_time",
         )
 
-        print(
+        logger.debug(
             f"Original dataset length: {ds.sizes['time']} -- {ds_clean.sizes['time']} after cleaning -- {ds_ignored.sizes['time']} removed"
         )
-        print(f"Cleaned dataset length:  {ds_clean.sizes['time']}")
+        logger.debug(f"Cleaned dataset length:  {ds_clean.sizes['time']}")
         n_removed_timesteps = ds.sizes["time"] - ds_clean.sizes["time"]
-        print(
+        logger.debug(
             f"Removed {n_removed_timesteps} timestamps. [{(n_removed_timesteps/ds.sizes['time'])*100:.2f}%]"
         )
 
@@ -329,23 +332,23 @@ def remove_downtime_intervals_from_ds(data, params, highest_minimum_height, lowe
             description="Timestamps corresponding to each radar measurement.",
         )
 
-        print(
+        logger.debug(
             f"--------------- OVER ALL DATASET INFORMATION FOR {radar_slug} ---------------"
         )
-        print(
+        logger.debug(
             f"Time range: from {ds_clean.time.min().values} to {ds_clean.time.max().values} \t || Total time steps: {ds_clean.sizes['time']}"
         )
-        print(
+        logger.debug(
             f"Height range: from {ds_clean.height.min().values} to {ds_clean.height.max().values} \t\t\t\t\t || Total height gates: {ds_clean.sizes['height']}"
         )
-        print(
+        logger.debug(
             f"Range gate sizes included: {unique_range_gate_sizes} meters \t\t\t\t || Total unique sizes: {len(unique_range_gate_sizes)}"
         )
-        print(
+        logger.debug(
             f"Sensitivity curve included  \t\t\t\t\t\t\t\t || Min to max: {ds_clean.sensitivity.min().values:.2f} to {ds_clean.sensitivity.max().values:.2f} dBZ"
         )
-        print("---------------------------------------------------------------")
+        logger.debug("---------------------------------------------------------------")
 
         data.radar_datasets[radar_slug] = ds_clean
-        print(f"✅ Time-matched data for {radar_slug} written successfully")
+        logger.debug(f"✅ Time-matched data for {radar_slug} written successfully")
     return data

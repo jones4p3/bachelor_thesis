@@ -1,11 +1,13 @@
-import re
+import logging
 
 import numpy as np
 import xarray as xr
 
+logger = logging.getLogger("occurrences")
+
 
 def create_global_bin_edges(data, params):
-    print("Creating global bin edges for all radars.")
+    logger.info("🌎 Creating global bin edges for all radars.")
     bin_size = params.occurrence.bin_size
     radar_datasets = data.radar_datasets
     mins = []
@@ -17,8 +19,8 @@ def create_global_bin_edges(data, params):
     min_ze = np.nanmin(mins)
     max_ze = np.nanmax(maxs)
     bin_edges = np.arange(min_ze, max_ze + bin_size, bin_size)
-    print(
-        f"Global bin edges created from {min_ze} to {max_ze} with bin size {bin_size}.\n"
+    logger.info(
+        f"🌎 ✅ Global bin edges created from {min_ze} to {max_ze} with bin size {bin_size}."
     )
     return bin_edges
 
@@ -26,7 +28,7 @@ def create_global_bin_edges(data, params):
 def calculate_occurrences(ds, bin_edges, use_aligned=False):
     radar_name = ds.attrs.get("name", "Unknown Radar")
     bin_size = bin_edges[1] - bin_edges[0]
-    print(f"Calculating occurrences for radar: {radar_name} with bin size: {bin_size}")
+    logger.debug(f"Calculating occurrences for radar: {radar_name} with bin size: {bin_size}")
 
     # Get reflectivity values
     ds = ds.copy()  # Work on a copy to avoid modifying the original dataset
@@ -38,7 +40,7 @@ def calculate_occurrences(ds, bin_edges, use_aligned=False):
     nbins = len(bin_centers)
 
     # Information printing
-    print(
+    logger.debug(
         f"Reflectivity min: {bin_edges[0]:.2f}, max: {bin_edges[-1]:.2f}, #Bins: {len(bin_centers)}, Lower edge first bin: {bin_edges[0]:.2f}, Upper edge last bin: {bin_edges[-1]:.2f}"
     )
 
@@ -119,7 +121,7 @@ def calculate_occurrences(ds, bin_edges, use_aligned=False):
 
 
 def calculate_sensitivity(ds, threshold=0.999, min_samples_per_height=50):
-    print(f"Calculating sensitivity for threshold: {threshold}")
+    logger.debug(f"Calculating sensitivity for threshold: {threshold}")
     occurrences_sorted = ds["occurrences"].sortby(
         "bin", ascending=True
     )  # Ensure bins are sorted in ascending order
@@ -139,7 +141,7 @@ def calculate_sensitivity(ds, threshold=0.999, min_samples_per_height=50):
         cdf["bin"].where(cdf >= sensitivity_threshold).min(dim="bin")
     )  # Looks for the minimum bin value where the cdf is greater than or equal to the sensitivity threshold for each height level
 
-    print(
+    logger.debug(
         f"Removing sensitivity values which dont pass the threshold of having at least {min_samples_per_height} occurrences in the bin\n"
     )
     n_samples = ds["counts"].sum(
@@ -161,7 +163,7 @@ def calculate_occurrences_and_sensitivity_for_all_radars(data, params):
     bin_edges = create_global_bin_edges(data, params)
 
     for radar_handle, ds in data.radar_datasets.items():
-        print(f"Calculating occurrences and sensitivity for radar: {radar_handle}")
+        logger.info(f"💻 Calculating occurrences and sensitivity for radar: {radar_handle}")
         data.radar_datasets[radar_handle] = calculate_occurrences(
             ds, bin_edges=bin_edges, use_aligned=False
         )
@@ -170,4 +172,5 @@ def calculate_occurrences_and_sensitivity_for_all_radars(data, params):
             threshold=params.sensitivity.threshold,
             min_samples_per_height=params.sensitivity.min_samples_per_height,
         )
+        logger.info(f"💻 ✅ Occurrences and sensitivity calculated for radar: {radar_handle}")
     return data

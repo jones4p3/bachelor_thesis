@@ -1,40 +1,40 @@
 import numpy as np
+import logging
 
-def slice_height_range(data, params):
-    debug = params.debug
+logger = logging.getLogger("height_slicing")
+
+def slice_height_range(data):
     highest_minimum_height = {"radar": "", "height": -np.inf}
     lowest_maximum_height = {"radar": "", "height": np.inf}
     for radar, ds in data.radar_datasets.items():
-        print(f"  ---------------- Processing radar: {radar} ----------------")
+        logger.debug(f"  ---------------- Processing radar: {radar} ----------------")
         height = ds["height"].values
         min_height = height.min()
         max_height = height.max()
-        print(f"    Min height: {min_height} m")
-        print(f"    Max height: {max_height} m")
+        logger.debug(f"    Min height: {min_height} m")
+        logger.debug(f"    Max height: {max_height} m")
         if min_height > highest_minimum_height["height"]:
             highest_minimum_height["radar"] = radar
             highest_minimum_height["height"] = min_height
         if max_height < lowest_maximum_height["height"]:
             lowest_maximum_height["radar"] = radar
             lowest_maximum_height["height"] = max_height
-    if debug:
-        print(
+        logger.debug(
             f"Radar with lowest min height: {highest_minimum_height['radar']} at {highest_minimum_height['height']} m"
         )
-        print(
+        logger.debug(
             f"Radar with highest max height: {lowest_maximum_height['radar']} at {lowest_maximum_height['height']} m"
         )
 
     # Slcing the dataset to common height range
     common_min_height = highest_minimum_height["height"]
     common_max_height = lowest_maximum_height["height"]
-    print(
-        f"Common height range for all radars: {common_min_height} m to {common_max_height} m"
+    logger.debug(
+        f"Common height range for all radars: {common_min_height:.2f} m to {common_max_height:.2f} m"
     )
 
     for radar, ds in data.radar_datasets.items():
-        if debug:
-            print(f"  ---------------- Slicing radar: {radar} ----------------")
+        logger.debug(f"  ---------------- Slicing radar: {radar} ----------------")
         height_size = ds["height"].size
         height_1d = np.asarray(ds["height"].values).squeeze()
         idx = np.where(
@@ -46,11 +46,10 @@ def slice_height_range(data, params):
         ds_sliced = ds.isel(height=slice(i0, i1))
         new_min_height = ds_sliced["height"].min().values
         new_max_height = ds_sliced["height"].max().values
-        if debug:
-            print(f"Original height size: {height_size} gates")
-            print(f"Sliced height size: {ds_sliced['height'].size} gates")
-            print(f"    New min height: {new_min_height} m")
-            print(f"    New max height: {new_max_height} m")
+        logger.debug(f"Original height size: {height_size} gates")
+        logger.debug(f"Sliced height size: {ds_sliced['height'].size} gates")
+        logger.debug(f"    New min height: {new_min_height} m")
+        logger.debug(f"    New max height: {new_max_height} m")
         data.radar_datasets[radar] = ds_sliced
         
     return data, highest_minimum_height, lowest_maximum_height

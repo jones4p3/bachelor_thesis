@@ -1,5 +1,8 @@
+import logging
 import matplotlib.pyplot as plt
 import os
+
+logger = logging.getLogger("cloud_plotting")
 
 # ---------------
 # Radar Sensitivity Profiles
@@ -20,7 +23,7 @@ def plot_radar_sensitivity_profiles(data):
     ax.legend(title=f"Solid: Cloud detection sensitivity +{sensitivity_add_in_dbz} dBZ\nDashed: Sensitivity",ncol=2, loc='upper left', frameon=True, handlelength=1.5, columnspacing=5, title_fontsize=11, fontsize=9)
     ax.legend(loc="upper left")
     plt.savefig(os.path.join(data.figure_folder, "radar_sensitivity_profiles.png"), dpi=300, bbox_inches='tight')
-    
+    logger.info("🖼️ Radar sensitivity profiles saved.")
 # ---------------
 # Time Fraction Plots
 # ---------------
@@ -52,3 +55,4 @@ def plot_time_fraction_profiles(data):
         plt.xlabel("Date")
         plt.legend(fontsize="small")
         plt.savefig(os.path.join(data.figure_folder, f"daily_{var}.png"), dpi=300, bbox_inches="tight")
+        logger.info(f"🖼️  Daily {var.replace('_', ' ').title()} plot saved.")

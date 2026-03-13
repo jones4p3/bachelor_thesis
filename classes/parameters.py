@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from os import write
+from typing import Literal
 
 @dataclass
 class SensitivityParameters:
@@ -35,5 +36,5 @@ class Parameters:
     occurrence: OccurrenceParameters
     uptime_alignment: UptimeAlignmentParameters
     cloud_detection: CloudDetectionParameters
-    debug: bool
+    logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     write_netcdf_files: bool

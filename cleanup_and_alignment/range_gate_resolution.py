@@ -1,8 +1,9 @@
 import numpy as np
+import logging
 
+logger = logging.getLogger("range_gate_resolution")
 
-def calculate_range_gate_resolution(data, params):
-    debug = params.debug
+def calculate_range_gate_resolution(data):
     rounding_tolerance = 1
 
     for idx, (radar, ds) in enumerate(data.radar_datasets.items()):
@@ -43,21 +44,19 @@ def calculate_range_gate_resolution(data, params):
             first_occurrence_index[correct_counts],
         )
 
-        if debug:
-            print(f"------------ Radar: {radar_name} ------------")
-            print(
-                f"Range gate sizes [{len(unique_range_gate_sizes)}]:\t{unique_range_gate_sizes}"
-            )
-            print(f"Counts: \t\t{counts_per_unique_range_gate_size:}")
-            print(f"Index: \t\t\t{first_occurrence_index}\n")
+        logger.debug(f"------------ Radar: {radar_name} ------------")
+        logger.debug(
+            f"Range gate sizes [{len(unique_range_gate_sizes)}]:\t{unique_range_gate_sizes}"
+        )
+        logger.debug(f"Counts: \t\t{counts_per_unique_range_gate_size:}")
+        logger.debug(f"Index: \t\t\t{first_occurrence_index}\n")
 
-            print(
-                f"Correct Range gate sizes [{len(assigned_range_sizes)}]: {assigned_range_sizes}"
-            )
+        logger.debug(
+            f"Correct Range gate sizes [{len(assigned_range_sizes)}]: {assigned_range_sizes}"
+        )
         gate_height = ds["height"].isel(height=assigned_range_sizes_index).values
-        if debug:
-            print(f"Gate heights for correct range gate sizes: {gate_height}")
-            print(f"Correct Index: {assigned_range_sizes_index}")
+        logger.debug(f"Gate heights for correct range gate sizes: {gate_height}")
+        logger.debug(f"Correct Index: {assigned_range_sizes_index}")
 
         # Creating an array for the range sizes with height for assigned range gate sizes
         assigned_range_sizes_with_height = []
@@ -91,11 +90,11 @@ def calculate_range_gate_resolution(data, params):
         assigned_range_sizes_with_height = np.array(assigned_range_sizes_with_height)
 
         # Check for consistency
-        print(
+        logger.debug(
             f"Check for consistency: {height.size} vs {assigned_range_sizes_with_height.size}"
         )
         if height.size != assigned_range_sizes_with_height.size:
-            print("❌ Mismatch in height gates and range size gates!")
+            logger.error("❌ Mismatch in height gates and range size gates!")
             continue
         # Adding the range gate sizes to the dictionary
         ds["range_gate_sizes"] = (("height"), range_gate_sizes)
