@@ -4,6 +4,8 @@ import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
 
+from cloud_statistics.bin_cloud_fraction import bin_cloud_fraction
+
 logger = logging.getLogger("cloud_statistics")
 
 def calculate_cloud_statistics(data, params):
@@ -103,6 +105,7 @@ def calculate_cloud_statistics(data, params):
     # ---------------------------------
     # BINNING
     # ---------------------------------
+    data = bin_cloud_fraction(data, params)
 
     vars_to_bin = ["cloud_base_in_m", "cloud_top_in_m", "cloud_thickness_in_m"]
 

@@ -4,3 +4,4 @@ pandas
 matplotlib
 dask
 h5netcdf
+scienceplots

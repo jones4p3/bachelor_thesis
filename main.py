@@ -84,10 +84,20 @@ logger.info("✅ Cloud statistics calculated for all radars.")
 # PLOTTING
 # ---------------------------------
 logger.info("\n--------- 7) Generating plots ---------")
-from cloud_plotting import plot_radar_sensitivity_profiles, plot_time_fraction_profiles
+from cloud_plotting import *
 # Radar sensitivity profiles
 plot_radar_sensitivity_profiles(radar_datasets)
 
 # Time fraction profiles
 plot_time_fraction_profiles(radar_datasets)
+
+# Cloud fraction per height
+plot_cloud_fraction(data)
+
+# General vertical distribution of cloud layers
+plot_general_vertical_distribution(data, plot_start_height=151)
+
+# Per layer distribution of cloud base, cloud top, and cloud thickness
+plot_per_layer_vertical_distribution(data, plot_start_height=151)
+
 logger.info(f"✅ Plots generated and saved to {data.figure_folder}")
